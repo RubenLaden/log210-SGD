@@ -19,13 +19,13 @@ export class SgbRouter {
     /**
      * lister les cours
      */
-    public courses(req: Request, res: Response, next: NextFunction) {
+    public async courses(req: Request, res: Response, next: NextFunction) {
         try {
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let token = req.headers.token as string;
             // console.log("Token from header:", token);
             let courses = this.controller.courses(token);
-            this.generate_latency();
+            await this.generate_latency();
             res.status(200).send({
                 message: 'Success',
                 status: res.status,
@@ -37,13 +37,13 @@ export class SgbRouter {
         }
     }
 
-    public students(req: Request, res: Response, next: NextFunction) {
+    public async students(req: Request, res: Response, next: NextFunction) {
         try {
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let token = req.headers.token as string;
             let course = parseInt(req.params.course);
             let data = this.controller.students(token, course);
-            this.generate_latency();
+            await this.generate_latency();
             res.status(200).send({
                 message: 'Success',
                 status: res.status,
@@ -56,7 +56,7 @@ export class SgbRouter {
         }
     }
 
-    public note(req: Request, res: Response, next: NextFunction) {
+    public async note(req: Request, res: Response, next: NextFunction) {
         try {
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let teacher_token = req.headers.token as string;
@@ -79,7 +79,7 @@ export class SgbRouter {
         }
     }
 
-    public studentNote(req: Request, res: Response, next: NextFunction) {
+    public async studentNote(req: Request, res: Response, next: NextFunction) {
         try {
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let data = this.controller.studentNote(
@@ -89,7 +89,7 @@ export class SgbRouter {
                 parseInt(req.query.type_id as string),
                 parseFloat(req.query.note as string)
             );
-            this.generate_latency();
+            await this.generate_latency();
 
             res.status(200).send({
                 message: 'Success',
@@ -102,13 +102,13 @@ export class SgbRouter {
         }
     }
 
-    public studentNotes(req: Request, res: Response, next: NextFunction) {
+    public async studentNotes(req: Request, res: Response, next: NextFunction) {
         try {
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let token = req.headers.token as string;
             let data = this.controller.studentNotes(token);
             let sortedData = data.sort((n1, n2) => n1.course - n2.course);
-            this.generate_latency();
+            await this.generate_latency();
             res.status(200).send({
                 message: 'Success',
                 status: res.status,
@@ -120,13 +120,17 @@ export class SgbRouter {
         }
     }
 
-    public studentCourses(req: Request, res: Response, next: NextFunction) {
+    public async studentCourses(
+        req: Request,
+        res: Response,
+        next: NextFunction
+    ) {
         try {
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let token = req.headers.token as string;
             let data = this.controller.studentCourses(token);
 
-            this.generate_latency();
+            await this.generate_latency();
             res.status(200).send({
                 message: 'Success',
                 status: res.status,
@@ -138,14 +142,14 @@ export class SgbRouter {
         }
     }
 
-    public courseNotes(req: Request, res: Response, next: NextFunction) {
+    public async courseNotes(req: Request, res: Response, next: NextFunction) {
         try {
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let token = req.headers.token as string;
             let course = parseInt(req.params.course);
             // console.log("coursesNotes called with token", token, " and course ", course)
             let data = this.controller.courseNotes(token, course);
-            this.generate_latency();
+            await this.generate_latency();
             res.status(200).send({
                 message: 'Success',
                 status: res.status,
@@ -156,14 +160,14 @@ export class SgbRouter {
             res.status(code).json({ error: error.toString() });
         }
     }
-    public login(req: Request, res: Response, next: NextFunction) {
+    public async login(req: Request, res: Response, next: NextFunction) {
         try {
             let email = req.query.email as string;
             let password = req.query.password as string;
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let token = this.controller.login(email, password);
 
-            this.generate_latency();
+            await this.generate_latency();
             res.status(200).send({
                 message: 'Success',
                 status: res.status,
@@ -175,7 +179,7 @@ export class SgbRouter {
         }
     }
 
-    public clearNotes(req: Request, res: Response, next: NextFunction) {
+    public async clearNotes(req: Request, res: Response, next: NextFunction) {
         try {
             // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
             let token = req.headers.token as string;
@@ -190,25 +194,24 @@ export class SgbRouter {
         }
     }
 
-    public latency(req: Request, res: Response, next: NextFunction) {
+    public async latency(req: Request, res: Response, next: NextFunction) {
         this.router_latency = parseFloat(req.query.value as string); // Invoquer l'opération système (du DSS) dans le contrôleur GRASP
         // console.log("latency called with value of ", this.router_latency)
-        this.generate_latency();
+        await this.generate_latency();
 
         res.status(200).send({
             message: 'Success',
             status: res.status,
-            data: this.router_latency as number,
+            data: this.router_latency,
         });
     }
 
-    public generate_latency() {
-        var sleep = require('system-sleep');
+    public async generate_latency() {
         let latency: number = this.router_latency;
         let random: number = Math.random();
         let delay: number = +(random * latency * 1000).toFixed();
         // console.log("Use a latency of", delay, ' milliseconds')
-        sleep(delay);
+        await new Promise((resolve) => setTimeout(resolve, delay));
     }
 
     //apidoc -i src/routes/ -o docs/
@@ -268,7 +271,7 @@ export class SgbRouter {
 	 * @apiDescription L'enseignant ajoute une note dans le dossier de l'étudiant
 	 * @apiVersion 1.0.0
 	 *
-	 
+
 	 * @apiParam {Integer} student_id id de l'étudiant.
 	 * @apiParam {Integer} course_id id du cours.
 	 * @apiParam {String} type devoir ou Questionnaire
@@ -313,7 +316,7 @@ export class SgbRouter {
         this.router.get('/student/courses', this.studentCourses.bind(this)); // pour .bind voir https://stackoverflow.com/a/15605064/1168342
 
         /**
-	 * @api {get} /v1/courses Cours de l'enseignant 
+	 * @api {get} /v1/courses Cours de l'enseignant
 	 * @apiGroup Enseignant
 	 * @apiDescription Récupération de tous les cours enseigner par un enseignant
 	 * @apiVersion 1.0.0
@@ -333,7 +336,7 @@ export class SgbRouter {
         this.router.get('/courses', this.courses.bind(this)); // pour .bind voir https://stackoverflow.com/a/15605064/1168342
 
         /**
-	 * @api {get} /v1/course/:course/notes Notes des étudiants 
+	 * @api {get} /v1/course/:course/notes Notes des étudiants
 	 * @apiGroup Enseignant
 	 * @apiDescription Récupération de toutes les notes des étudiants d'un cours
 	 * @apiVersion 1.0.0

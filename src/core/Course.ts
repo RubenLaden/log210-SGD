@@ -12,16 +12,16 @@ export class Course {
 
     static fromId(id: number) {
         let courses = require('../data/courses.json');
-        for (var course in courses) {
-            if (courses[course].id == id) {
+        for (const course of courses) {
+            if (course.id == id) {
                 return new this(
-                    courses[course].id,
-                    courses[course].sigle,
-                    courses[course].nb_max_student,
-                    courses[course].groupe,
-                    courses[course].titre,
-                    courses[course].date_debut,
-                    courses[course].date_fin
+                    course.id,
+                    course.sigle,
+                    course.nb_max_student,
+                    course.groupe,
+                    course.titre,
+                    course.date_debut,
+                    course.date_fin
                 );
             }
         }
@@ -75,13 +75,11 @@ export class Course {
     }
 
     public students() {
-        let course_student = require('../data/course_student.json');
+        let course_students = require('../data/course_student.json');
         let _students = [];
-        for (let index in course_student) {
-            if (course_student[index].course_id == this._id) {
-                _students.push(
-                    Student.fromId(course_student[index].student_id)
-                );
+        for (const course_student of course_students) {
+            if (course_student.course_id == this._id) {
+                _students.push(Student.fromId(course_student.student_id));
             }
         }
         return _students;

@@ -11,8 +11,8 @@ export class Student {
 
     static login(email: string, password: string) {
         let students = require('../data/students.json');
-        for (var student in students) {
-            if (students[student].email == email) {
+        for (const student of students) {
+            if (student.email == email) {
                 return md5(email);
             }
         }
@@ -21,25 +21,24 @@ export class Student {
 
     static loginV2(email: string, password: string) {
         let students = require('../data/students.json');
-        for (var student in students) {
-            if (students[student].email == email) {
-                let current_student = students[student];
-                current_student.password = '';
-                return [md5(email), current_student];
+        for (const student of students) {
+            if (student.email == email) {
+                student.password = '';
+                return [md5(email), student];
             }
         }
         return null;
     }
     static fromId(id: number) {
         let students = require('../data/students.json');
-        for (var student in students) {
-            if (students[student].id == id) {
+        for (const student of students) {
+            if (student.id == id) {
                 return new this(
-                    students[student].id,
-                    students[student].first_name,
-                    students[student].last_name,
-                    students[student].email,
-                    students[student].permanent_code
+                    student.id,
+                    student.first_name,
+                    student.last_name,
+                    student.email,
+                    student.permanent_code
                 );
             }
         }
@@ -48,14 +47,14 @@ export class Student {
 
     static fromToken(token: string) {
         let students = require('../data/students.json');
-        for (var student in students) {
-            if (md5(students[student].email) == token) {
+        for (const student of students) {
+            if (md5(student.email) === token) {
                 return new this(
-                    students[student].id,
-                    students[student].first_name,
-                    students[student].last_name,
-                    students[student].email,
-                    students[student].permanent_code
+                    student.id,
+                    student.first_name,
+                    student.last_name,
+                    student.email,
+                    student.permanent_code
                 );
             }
         }
@@ -97,17 +96,17 @@ export class Student {
 
     public followCourse(course_id: number) {
         let courses = this.courses();
-        for (let index in courses) {
-            if (courses[index].id() == course_id) return true;
+        for (const course of courses) {
+            if (course.id() == course_id) return true;
         }
         return false;
     }
     public courses() {
-        let course_student = require('../data/course_student.json');
+        let course_students = require('../data/course_student.json');
         let _courses = [];
-        for (let i in course_student) {
-            if (this.id() == course_student[i].student_id) {
-                _courses.push(Course.fromId(course_student[i].course_id));
+        for (const course_student of course_students) {
+            if (this.id() == course_student.student_id) {
+                _courses.push(Course.fromId(course_student.course_id));
             }
         }
         return _courses;

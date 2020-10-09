@@ -10,8 +10,8 @@ export class Teacher {
 
     static login(email: string, password: string) {
         let teachers = require('../data/teachers.json');
-        for (var teacher in teachers) {
-            if (teachers[teacher].email == email) {
+        for (const teacher of teachers) {
+            if (teacher.email == email) {
                 return md5(email);
             }
         }
@@ -20,11 +20,10 @@ export class Teacher {
 
     static loginV2(email: string, password: string) {
         let teachers = require('../data/teachers.json');
-        for (var teacher in teachers) {
-            if (teachers[teacher].email == email) {
-                let current_teacher = teachers[teacher];
-                current_teacher.password = '';
-                return [md5(email), current_teacher];
+        for (const teacher of teachers) {
+            if (teacher.email == email) {
+                teacher.password = '';
+                return [md5(email), teacher];
             }
         }
         return null;
@@ -32,13 +31,13 @@ export class Teacher {
 
     static fromId(id: number) {
         let teachers = require('../data/teachers.json');
-        for (var teacher in teachers) {
-            if (teachers[teacher].id == id) {
+        for (const teacher of teachers) {
+            if (teacher.id == id) {
                 return new this(
-                    teachers[teacher].id,
-                    teachers[teacher].first_name,
-                    teachers[teacher].last_name,
-                    teachers[teacher].email
+                    teacher.id,
+                    teacher.first_name,
+                    teacher.last_name,
+                    teacher.email
                 );
             }
         }
@@ -47,13 +46,13 @@ export class Teacher {
 
     static fromToken(token: string) {
         let teachers = require('../data/teachers.json');
-        for (var teacher in teachers) {
-            if (md5(teachers[teacher].email) == token) {
+        for (const teacher of teachers) {
+            if (md5(teacher.email) == token) {
                 return new this(
-                    teachers[teacher].id,
-                    teachers[teacher].first_name,
-                    teachers[teacher].last_name,
-                    teachers[teacher].email
+                    teacher.id,
+                    teacher.first_name,
+                    teacher.last_name,
+                    teacher.email
                 );
             }
         }
@@ -84,8 +83,8 @@ export class Teacher {
     }
     public giveCourse(course_id: number) {
         let courses = this.courses();
-        for (let index in courses) {
-            if (courses[index].id() == course_id) return true;
+        for (const course of courses) {
+            if (course.id() == course_id) return true;
         }
         return false;
     }
@@ -94,11 +93,11 @@ export class Teacher {
     // }
 
     public courses() {
-        let course_teacher = require('../data/course_teacher.json');
+        let course_teachers = require('../data/course_teacher.json');
         let _courses = [];
-        for (let i in course_teacher) {
-            if (this.id() == course_teacher[i].teacher_id) {
-                _courses.push(Course.fromId(course_teacher[i].course_id));
+        for (const course_teacher of course_teachers) {
+            if (this.id() == course_teacher.teacher_id) {
+                _courses.push(Course.fromId(course_teacher.course_id));
             }
         }
         return _courses;

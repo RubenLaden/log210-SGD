@@ -12,21 +12,30 @@ const should = chai.should();
 let courses = require('../src/data/courses.json');
 let students = require('../src/data/students.json');
 
+const STUDENT3 = 3;
+const TEACHER3 = 3;
+const STUDENT3_MAIL = `student+${STUDENT3}@gmail.com`;
+const TEACHER3_MAIL = `teacher+${TEACHER3}@gmail.com`;
+
 async function loginTeacher() {
     chai.request(app)
-        .get('/api/v1/login?email=teacher%2B3%40gmail.com&password=1234')
+        .get(
+            `/api/v1/login?email=teacher%2B${TEACHER3}%40gmail.com&password=1234`
+        )
         .then((res) => {
-            expect(res.body.token).to.eq(md5('teacher+3@gmail.com'));
+            expect(res.body.token).to.eq(md5(TEACHER3_MAIL));
         });
 }
 
 async function loginStudent() {
     chai.request(app)
-        .get('/api/v1/login?email=student%2B3%40gmail.com&password=1234')
+        .get(
+            `/api/v1/login?email=student%2B${STUDENT3}%40gmail.com&password=1234`
+        )
         .then((res) => {
             expect(res.status).to.equal(200);
             expect(res).to.be.json;
-            expect(res.body.token).to.equal(md5('student+3@gmail.com'));
+            expect(res.body.token).to.equal(md5(STUDENT3_MAIL));
         });
 }
 
@@ -47,7 +56,7 @@ async function insertNote(
                 '&note=' +
                 note.toString()
         )
-        .set('token', md5('student+3@gmail.com'))
+        .set('token', md5(STUDENT3_MAIL))
         .then((res) => {
             expect(res.status).to.equal(200);
             expect(res).to.be.json;
@@ -89,7 +98,7 @@ describe('Login', () => {
         expect(res.status).to.equal(200);
         // console.log(res.body);
         expect(res).to.be.json;
-        expect(res.body.token).to.eq(md5('teacher+3@gmail.com'));
+        expect(res.body.token).to.eq(md5(TEACHER3_MAIL));
     }, 10000);
 
     it('Login student V2', async () => {
@@ -98,7 +107,7 @@ describe('Login', () => {
             .get('/api/v2/login?email=student%2B3%40gmail.com&password=1234');
         expect(res.status).to.equal(200);
         expect(res).to.be.json;
-        expect(res.body.token).to.eq(md5('student+3@gmail.com'));
+        expect(res.body.token).to.eq(md5(STUDENT3_MAIL));
     }, 10000);
 
     it('LoginV2 with invalid email', async () => {
@@ -124,7 +133,7 @@ describe('Teacher', () => {
             const res = await chai
                 .request(app)
                 .get('/api/v1/courses')
-                .set('token', md5('teacher+3@gmail.com'));
+                .set('token', md5(TEACHER3_MAIL));
             expect(res.status).to.equal(200);
             expect(res).to.be.json;
             expect(res.body.data).to.equal(result);
@@ -147,7 +156,7 @@ describe('Teacher', () => {
             const res = await chai
                 .request(app)
                 .get('/api/v1/course/3/students')
-                .set('token', md5('teacher+3@gmail.com'));
+                .set('token', md5(TEACHER3_MAIL));
             expect(res.status).to.equal(200);
             expect(res).to.be.json;
             expect(res.body.data).to.equal(
@@ -196,27 +205,31 @@ describe('Student notes', () => {
     }, 10000);
 
     it('responds with successful call for notes', async () => {
-        insertNote(1, 'devoir', 2, 33.33);
-        insertNote(4, 'devoir', 5, 66.66);
+        const devoirs = [
+            {
+                course: 1,
+                type: 'devoir',
+                type_id: 2,
+                note: 33.33,
+            },
+            {
+                course: 4,
+                type: 'devoir',
+                type_id: 5,
+                note: 66.66,
+            },
+        ];
+        for (const devoir of devoirs) {
+            insertNote(devoir.course, devoir.type, devoir.type_id, devoir.note);
+        }
 
         const res = await chai
             .request(app)
             .get('/api/v1/student/notes/')
-            .set('token', md5('student+3@gmail.com'));
+            .set('token', md5(STUDENT3_MAIL));
         expect(res.status).to.equal(200);
         expect(res).to.be.json;
-        expect(res.body.data[0]).to.deep.equal({
-            course: 1,
-            type: 'devoir',
-            type_id: 2,
-            note: 33.33,
-        });
-        expect(res.body.data[1]).to.deep.equal({
-            course: 4,
-            type: 'devoir',
-            type_id: 5,
-            note: 66.66,
-        });
+        expect(devoirs).to.deep.include.members(res.body.data);
     }, 10000);
 
     it('responds with error on call for notes with invalid authentification', async () => {
@@ -246,7 +259,7 @@ describe('student courses', () => {
         const res = await chai
             .request(app)
             .get('/api/v1/student/courses')
-            .set('token', md5('student+3@gmail.com'));
+            .set('token', md5(STUDENT3_MAIL));
         expect(res.status).to.equal(200);
         expect(res).to.be.json;
         expect(res.body.data).to.deep.equal(expected_results);
@@ -256,7 +269,7 @@ describe('student courses', () => {
         const res = await chai
             .request(app)
             .get('/api/v1/student/courses')
-            .set('token', md5('teacher+3@gmail.com'));
+            .set('token', md5(TEACHER3_MAIL));
         expect(res.status).to.equal(500);
         expect(res).to.be.json;
         expect(res.body.error).to.equal('Error: Student token not found');
@@ -264,38 +277,47 @@ describe('student courses', () => {
 });
 
 describe('course notes', () => {
+    const DEVOIRS = [
+        {
+            course: 1,
+            type: 'devoir',
+            type_id: 2,
+            note: 33.33,
+            student: STUDENT3,
+        },
+        {
+            course: 2,
+            type: 'questionnaire',
+            type_id: 5,
+            note: 66.66,
+            student: STUDENT3,
+        },
+        {
+            course: 2,
+            type: 'questionnaire',
+            type_id: 7,
+            note: 88.88,
+            student: STUDENT3,
+        },
+    ];
+
     beforeEach(async () => {
         loginStudent();
-        insertNote(1, 'devoir', 2, 33.33);
-        insertNote(2, 'questionnaire', 5, 66.66);
-        insertNote(2, 'questionnaire', 7, 88.88);
+        for (const devoir of DEVOIRS) {
+            insertNote(devoir.course, devoir.type, devoir.type_id, devoir.note);
+        }
         loginTeacher();
     });
 
     it('responds with all notes for a course', async () => {
+        const expectedNotes = DEVOIRS.filter((devoir) => devoir.course == 2);
         const res = await chai
             .request(app)
             .get('/api/v1/course/2/notes')
-            .set('token', md5('teacher+3@gmail.com'));
+            .set('token', md5(TEACHER3_MAIL));
         expect(res.status).to.equal(200);
         expect(res).to.be.json;
-        let sortedData = res.body.data.sort(
-            (n1, n2) => n1.type_id - n2.type_id
-        );
-        expect(sortedData[0]).to.deep.equal({
-            course: 2,
-            student: 3,
-            note: 66.66,
-            type: 'questionnaire',
-            type_id: 5,
-        });
-        expect(sortedData[1]).to.deep.equal({
-            course: 2,
-            student: 3,
-            note: 88.88,
-            type: 'questionnaire',
-            type_id: 7,
-        });
+        expect(expectedNotes).to.deep.include.members(res.body.data);
     }, 10000);
 
     it('responds with and error when trying to get notes for a course without authentification', async () => {
@@ -315,12 +337,20 @@ describe('test utility', () => {
         insertNote(1, 'devoir', 2, 33.33);
     }, 10000);
 
-    it('respond successfuly when changing server latency', async () => {
-        const res = await chai.request(app).get('/api/v1/latency?value=1.1');
-        expect(res.status).to.equal(200);
-        expect(res).to.be.json;
-        expect(res.body.data).to.equal(1.1);
-    }, 10000);
+    describe('latency generator', () => {
+        afterEach(async () => {
+            const res = await chai.request(app).get('/api/v1/latency?value=0');
+            expect(res.status).to.equal(200);
+        });
+        it('respond successfuly when changing server latency', async () => {
+            const res = await chai
+                .request(app)
+                .get('/api/v1/latency?value=1.1');
+            expect(res.status).to.equal(200);
+            expect(res).to.be.json;
+            expect(res.body.data).to.equal(1.1);
+        }, 10000);
+    });
 
     it('respond with error if trying to clear notes without login', async () => {
         const res = await chai
@@ -338,7 +368,7 @@ describe('test utility', () => {
         const res = await chai
             .request(app)
             .get('/api/v1/notes/clear')
-            .set('token', md5('teacher+3@gmail.com'));
+            .set('token', md5(TEACHER3_MAIL));
         expect(res.status).to.equal(200);
         expect(res).to.be.json;
         expect(res.body.data).to.equal(undefined);
@@ -346,7 +376,8 @@ describe('test utility', () => {
         const res2 = await chai
             .request(app)
             .get('/api/v1/course/1/notes')
-            .set('token', md5('teacher+3@gmail.com'));
+            .set('token', md5(TEACHER3_MAIL));
+
         expect(res2.status).to.equal(200);
         expect(res2).to.be.json;
         expect(res2.body.data).to.deep.equal([]);
@@ -360,7 +391,7 @@ describe('test utility', () => {
             .post(
                 '/api/v1/note?student_id=1&course_id=1&type=Question&type_id=1&note=99.99'
             )
-            .set('token', md5('teacher+3@gmail.com'));
+            .set('token', md5(TEACHER3_MAIL));
         expect(res).to.be.json;
         expect(res.body.error).to.equal(
             'Error: This teacher do not give this course'

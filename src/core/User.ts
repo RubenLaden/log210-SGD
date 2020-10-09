@@ -80,16 +80,16 @@ export class User {
 
     public login(email: string, password: string) {
         let students = require('../data/students.json');
-        for (var student in students) {
-            if (students[student].email == email) {
-                return Student.fromId(students[student].id);
+        for (const student of students) {
+            if (student.email == email) {
+                return Student.fromId(student.id);
             }
         }
 
         let teachers = require('../data/teachers.json');
-        for (var teacher in teachers) {
-            if (teachers[teacher].email == email) {
-                return Teacher.fromId(teachers[teacher]);
+        for (const teacher of teachers) {
+            if (teacher.email == email) {
+                return Teacher.fromId(teacher);
             }
         }
         throw new Error(
